@@ -42,8 +42,8 @@ public final class RoadTripUtil {
 		ZipFile zipFile = null;
 		try {
 			session = CassandraUtil.startCassandra();
-			CQLDataLoader dataLoader = new CQLDataLoader(session);
-			dataLoader.load(new ClassPathCQLDataSet("roadtrips.cql"));
+			/*CQLDataLoader dataLoader = new CQLDataLoader(session);
+			dataLoader.load(new ClassPathCQLDataSet("roadtrips.cql"));*/
 			
 			Insert insertStatement = QueryBuilder.insertInto("mdoctor","roadtrip");
 			insertStatement.value("id", QueryBuilder.bindMarker())

@@ -8,6 +8,8 @@ import org.apache.spark.sql.cassandra.CassandraSQLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.thinkaurelius.thrift.TDisruptorServer.Args;
+
 import java.io.IOException;
 
 /**
@@ -18,30 +20,14 @@ public class CustomerActivityTrackingSparkTest {
 
   public static void main(String[] args) throws IOException {
     try {
-      initSpark();
+      initSpark(args[0]);
     } catch (Exception e) {
       LOGGER.error(e.getMessage(), e);
       System.exit(1);
     }
   }
 
-
-
-	/*public static void initSpark() {
-		SparkConf conf = new SparkConf(true)
-				.setMaster("local")
-	            .setAppName("DatastaxtTests")
-	            .set("spark.executor.memory", "1g")
-				.set("spark.cassandra.connection.host", "localhost")
-				.set("spark.cassandra.connection.native.port", "9142")
-				.set("spark.cassandra.connection.rpc.port", "9171");
-		SparkContext ctx = new SparkContext(conf);
-		SparkContextJavaFunctions functions = CassandraJavaUtil.javaFunctions(ctx);
-		CassandraJavaRDD<CassandraRow> rdd = functions.cassandraTable("roadtrips", "roadtrip");
-		rdd.cache();*/
-
-
-  public static void initSpark() {
+  public static void initSpark(String id) {
     SparkConf conf = new SparkConf(true)
         .setMaster("local")
         .setAppName("DatastaxtTests")
@@ -52,7 +38,8 @@ public class CustomerActivityTrackingSparkTest {
     CassandraSQLContext csqlctx = new CassandraSQLContext(javaSparkContext);
     csqlctx.setKeyspace("mdoctor");
     SchemaRDD
-        schemaRDD = csqlctx.sql("SELECT * FROM customer_activity_tracking WHERE id = '50272629TE32268684'");
+        schemaRDD = csqlctx.sql("SELECT * FROM customer_activity_tracking WHERE id = "+id);
+    
     schemaRDD.cache();
 
     Row[] rows = schemaRDD.collect();
