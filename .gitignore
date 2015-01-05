@@ -2,9 +2,11 @@
 .classpath
 .project
 .settings
+log
 target
 
 # Package Files #
 *.war
 *.ear
+*.log
 /bin/
