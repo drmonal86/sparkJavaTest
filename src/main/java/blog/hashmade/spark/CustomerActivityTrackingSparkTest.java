@@ -13,6 +13,10 @@ import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.spark.connector.japi.CassandraJavaUtil;
+import com.datastax.spark.connector.japi.CassandraRow;
+import com.datastax.spark.connector.japi.SparkContextJavaFunctions;
+import com.datastax.spark.connector.japi.rdd.CassandraJavaRDD;
 import com.thinkaurelius.thrift.TDisruptorServer.Args;
 
 import java.io.IOException;
@@ -47,25 +51,23 @@ public class CustomerActivityTrackingSparkTest {
         .set("spark.cassandra.connection.native.port", "9042");
     SparkContext javaSparkContext = new SparkContext(conf);
 
-    CassandraSQLContext csqlctx = new CassandraSQLContext(javaSparkContext);
+   CassandraSQLContext csqlctx = new CassandraSQLContext(javaSparkContext);
     csqlctx.setKeyspace("mdoctor");
     SchemaRDD
-
-        schemaRDD = csqlctx.sql("SELECT id, timestamp, activity_type_desc, activity_details FROM customer_activity_tracking WHERE id="+id);
-
+        schemaRDD = csqlctx.sql("SELECT id, timestamp, activity_type_desc, ip_location_desc FROM customer_activity_tracking WHERE id =" +id + "limit 5" );  
     schemaRDD.cache();
+      
 
     Row[] rows = schemaRDD.collect();
     System.out.println("Number of rows returned " + rows.length);
     int i = 0;
-    String activityDetails = "";
     if (rows.length > 0) {
-      LOGGER.info("ROW\t\tID\t\t\t\tTIMESTAMP\t\tACTIVITY TYPE DESC\t\t\tDESTINATION TEXT");
+      LOGGER.info("ROW\t\tID\t\t\t\tTIMESTAMP\t\tACTIVITY TYPE DESC\t\t\tIP LOCATION");
       for (Row row : rows) {
         i++;
         // Pull destination text from activity details blob
 
-        LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2));
+        LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2) + "\t" + row.getString(3));
       }
     }
 
