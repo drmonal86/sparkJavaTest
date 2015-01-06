@@ -70,11 +70,33 @@ public class CustomerActivityTrackingSparkTest {
         i++;
         // Pull destination text from activity details blob
         String activityTypeHexString = row.getString(3);
-        byte[] activityTypeBytes = DatatypeConverter.parseHexBinary(activityTypeHexString);
+        // Trim 0x from beginning of hex string
+        String activityTypeASCIIString = convertHexToString(activityTypeHexString.substring(2));
         LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2));
       }
     }
 
+  }
+  public static String convertHexToString(String hex){
+
+    StringBuilder sb = new StringBuilder();
+    StringBuilder temp = new StringBuilder();
+
+    //49204c6f7665204a617661 split into two characters 49, 20, 4c...
+    for( int i=0; i<hex.length()-1; i+=2 ){
+
+      //grab the hex in pairs
+      String output = hex.substring(i, (i + 2));
+      //convert hex to decimal
+      int decimal = Integer.parseInt(output, 16);
+      //convert the decimal to character
+      sb.append((char)decimal);
+
+      temp.append(decimal);
+    }
+    System.out.println("Decimal : " + temp.toString());
+
+    return sb.toString();
   }
 
 
