@@ -5,6 +5,7 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SchemaRDD;
 import org.apache.spark.sql.cassandra.CassandraSQLContext;
 import org.apache.spark.sql.catalyst.expressions.Row;
+import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,7 @@ public class CustomerActivityTrackingSparkTest {
 		rdd.cache();*/
 
 
-  public static void initSpark() {
+  public static void initSpark() throws Exception {
     SparkConf conf = new SparkConf(true)
         .setMaster("local")
         .setAppName("DatastaxtTests")
@@ -65,14 +66,16 @@ public class CustomerActivityTrackingSparkTest {
     int i = 0;
     String activityDetails = "";
     if (rows.length > 0) {
-      LOGGER.info("ROW\t\tID\t\t\t\tTIMESTAMP\t\tACTIVITY TYPE DESC\t\t\tDESTINATION TEXT");
+      LOGGER.info("ROW\tID\t\t\t\t\tTIMESTAMP\t\t\t\t\tACTIVITY TYPE DESC\tDESTINATION TEXT");
       for (Row row : rows) {
         i++;
         // Pull destination text from activity details blob
         String activityTypeHexString = row.getString(3);
         // Trim 0x from beginning of hex string
         String activityTypeASCIIString = convertHexToString(activityTypeHexString.substring(2));
-        LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2));
+        JSONObject jsonObject = new JSONObject(activityTypeASCIIString);
+
+        LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2) + "\t\t" + jsonObject.get("destination_text"));
       }
     }
 
@@ -94,7 +97,6 @@ public class CustomerActivityTrackingSparkTest {
 
       temp.append(decimal);
     }
-    System.out.println("Decimal : " + temp.toString());
 
     return sb.toString();
   }
