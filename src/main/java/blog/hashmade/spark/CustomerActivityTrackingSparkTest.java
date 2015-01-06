@@ -31,7 +31,7 @@ public class CustomerActivityTrackingSparkTest {
     }
   }
 
-  public static void initSpark(String id) {
+  public static void initSpark(String id) throws Exception {
     SparkConf conf = new SparkConf(true)
         .setMaster("local")
         .setAppName("DatastaxtTests")
@@ -43,7 +43,7 @@ public class CustomerActivityTrackingSparkTest {
    CassandraSQLContext csqlctx = new CassandraSQLContext(javaSparkContext);
     csqlctx.setKeyspace("mdoctor");
     SchemaRDD
-        schemaRDD = csqlctx.sql("SELECT id, timestamp, activity_type_desc, ip_location_desc FROM customer_activity_tracking WHERE id =" +id + "limit 5" );  
+        schemaRDD = csqlctx.sql("SELECT id, timestamp, activity_type_desc, ip_location_desc, activity_details FROM customer_activity_tracking WHERE id =" +id + "limit 5" );
     schemaRDD.cache();
       
 
@@ -52,18 +52,18 @@ public class CustomerActivityTrackingSparkTest {
     int i = 0;
     String activityDetails = "";
     if (rows.length > 0) {
-      LOGGER.info("ROW\tID\t\t\t\t\tTIMESTAMP\t\t\t\t\tACTIVITY TYPE DESC\tDESTINATION TEXT");
+      LOGGER.info("ROW\tID\t\t\t\t\tTIMESTAMP\t\t\t\t\tACTIVITY TYPE DESC\tDESTINATION TEXT\t\t\tLOCATION");
       for (Row row : rows) {
         i++;
         // Pull destination text from activity details blob
 
-        String activityTypeHexString = row.getString(3);
+        String activityTypeHexString = row.getString(4);
         // Trim 0x from beginning of hex string
         String activityTypeASCIIString = convertHexToString(activityTypeHexString.substring(2));
         JSONObject jsonObject = new JSONObject(activityTypeASCIIString);
 
-        LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2) + "\t\t" + jsonObject.get("destination_text"));
-        LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2) + "\t" + row.getString(3));
+        LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2) + "\t\t" + jsonObject.get("destination_text") + "\t\t" + row.getString(3));
+
 
       }
     }
