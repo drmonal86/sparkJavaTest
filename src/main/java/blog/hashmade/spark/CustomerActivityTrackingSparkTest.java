@@ -23,30 +23,15 @@ public class CustomerActivityTrackingSparkTest {
   public static void main(String[] args) throws IOException {
     try {
 
-      initSpark();
+      initSpark(args[0]);
+
     } catch (Exception e) {
       LOGGER.error(e.getMessage(), e);
       System.exit(1);
     }
   }
 
-
-
-	/*public static void initSpark() {
-		SparkConf conf = new SparkConf(true)
-				.setMaster("local")
-	            .setAppName("DatastaxtTests")
-	            .set("spark.executor.memory", "1g")
-				.set("spark.cassandra.connection.host", "localhost")
-				.set("spark.cassandra.connection.native.port", "9142")
-				.set("spark.cassandra.connection.rpc.port", "9171");
-		SparkContext ctx = new SparkContext(conf);
-		SparkContextJavaFunctions functions = CassandraJavaUtil.javaFunctions(ctx);
-		CassandraJavaRDD<CassandraRow> rdd = functions.cassandraTable("roadtrips", "roadtrip");
-		rdd.cache();*/
-
-
-  public static void initSpark() throws Exception {
+  public static void initSpark(String id) {
     SparkConf conf = new SparkConf(true)
         .setMaster("local")
         .setAppName("DatastaxtTests")
@@ -55,11 +40,12 @@ public class CustomerActivityTrackingSparkTest {
         .set("spark.cassandra.connection.native.port", "9042");
     SparkContext javaSparkContext = new SparkContext(conf);
 
-    CassandraSQLContext csqlctx = new CassandraSQLContext(javaSparkContext);
+   CassandraSQLContext csqlctx = new CassandraSQLContext(javaSparkContext);
     csqlctx.setKeyspace("mdoctor");
     SchemaRDD
-        schemaRDD = csqlctx.sql("SELECT id, timestamp, activity_type_desc, activity_details FROM customer_activity_tracking WHERE id = '50272629TE32268684'");
+        schemaRDD = csqlctx.sql("SELECT id, timestamp, activity_type_desc, ip_location_desc FROM customer_activity_tracking WHERE id =" +id + "limit 5" );  
     schemaRDD.cache();
+      
 
     Row[] rows = schemaRDD.collect();
     System.out.println("Number of rows returned " + rows.length);
@@ -70,12 +56,15 @@ public class CustomerActivityTrackingSparkTest {
       for (Row row : rows) {
         i++;
         // Pull destination text from activity details blob
+
         String activityTypeHexString = row.getString(3);
         // Trim 0x from beginning of hex string
         String activityTypeASCIIString = convertHexToString(activityTypeHexString.substring(2));
         JSONObject jsonObject = new JSONObject(activityTypeASCIIString);
 
         LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2) + "\t\t" + jsonObject.get("destination_text"));
+        LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2) + "\t" + row.getString(3));
+
       }
     }
 
