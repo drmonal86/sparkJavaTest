@@ -2,26 +2,16 @@ package blog.hashmade.spark;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.api.java.JavaSQLContext;
-import org.apache.spark.sql.api.java.JavaSchemaRDD;
-import org.apache.spark.sql.catalyst.expressions.Row;
 import org.apache.spark.sql.SchemaRDD;
 import org.apache.spark.sql.cassandra.CassandraSQLContext;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
+import org.apache.spark.sql.catalyst.expressions.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.spark.connector.japi.CassandraJavaUtil;
-import com.datastax.spark.connector.japi.CassandraRow;
-import com.datastax.spark.connector.japi.SparkContextJavaFunctions;
-import com.datastax.spark.connector.japi.rdd.CassandraJavaRDD;
 import com.thinkaurelius.thrift.TDisruptorServer.Args;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.List;
 
 /**
  */
@@ -67,10 +57,35 @@ public class CustomerActivityTrackingSparkTest {
         i++;
         // Pull destination text from activity details blob
 
+        String activityTypeHexString = row.getString(3);
+        // Trim 0x from beginning of hex string
+        String activityTypeASCIIString = convertHexToString(activityTypeHexString.substring(2));
         LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2) + "\t" + row.getString(3));
+
       }
     }
 
+  }
+  public static String convertHexToString(String hex){
+
+    StringBuilder sb = new StringBuilder();
+    StringBuilder temp = new StringBuilder();
+
+    //49204c6f7665204a617661 split into two characters 49, 20, 4c...
+    for( int i=0; i<hex.length()-1; i+=2 ){
+
+      //grab the hex in pairs
+      String output = hex.substring(i, (i + 2));
+      //convert hex to decimal
+      int decimal = Integer.parseInt(output, 16);
+      //convert the decimal to character
+      sb.append((char)decimal);
+
+      temp.append(decimal);
+    }
+    System.out.println("Decimal : " + temp.toString());
+
+    return sb.toString();
   }
 
 
