@@ -2,20 +2,14 @@ package blog.hashmade.spark;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.api.java.JavaSQLContext;
-import org.apache.spark.sql.api.java.JavaSchemaRDD;
-import org.apache.spark.sql.catalyst.expressions.Row;
 import org.apache.spark.sql.SchemaRDD;
 import org.apache.spark.sql.cassandra.CassandraSQLContext;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
+import org.apache.spark.sql.catalyst.expressions.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.List;
 
 /**
  */
@@ -75,7 +69,8 @@ public class CustomerActivityTrackingSparkTest {
       for (Row row : rows) {
         i++;
         // Pull destination text from activity details blob
-
+        String activityTypeHexString = row.getString(3);
+        byte[] activityTypeBytes = DatatypeConverter.parseHexBinary(activityTypeHexString);
         LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2));
       }
     }
