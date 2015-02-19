@@ -9,7 +9,14 @@ import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+
+
+import com.datastax.spark.connector.japi.CassandraRow;
+import com.datastax.spark.connector.japi.rdd.CassandraJavaRDD;
+
 import javax.xml.bind.DatatypeConverter;
+
 import java.io.IOException;
 
 /**
@@ -22,7 +29,7 @@ public class CustomerActivityTrackingSparkTest {
 
   public static void main(String[] args) throws IOException {
     try {
-
+      
       initSpark(args[0]);
 
     } catch (Exception e) {
@@ -43,29 +50,46 @@ public class CustomerActivityTrackingSparkTest {
    CassandraSQLContext csqlctx = new CassandraSQLContext(javaSparkContext);
     csqlctx.setKeyspace("mdoctor");
     SchemaRDD
-        schemaRDD = csqlctx.sql("SELECT id, timestamp, activity_type_desc, ip_location_desc, activity_details FROM customer_activity_tracking WHERE id =" +id + "limit 5" );
-    schemaRDD.cache();
-      
+        schemaRDD = csqlctx.sql("SELECT * FROM customer_activity_tracking WHERE id =" +id);
+    
+    Row[] rowschemaRDD= schemaRDD.collect();
+    
+   System.out.println("Number of rows Schema returned " + rowschemaRDD.length);
+   schemaRDD.registerTempTable("activity");
 
-    Row[] rows = schemaRDD.collect();
-    System.out.println("Number of rows returned " + rows.length);
+   SchemaRDD filterRDD = csqlctx.sql("Select * FROM customer_activity_tracking_filters where id = "+ id);
+    Row[] rowfilterRDD= filterRDD.collect();
+    System.out.println("Number of rows FILTER returned " + rowfilterRDD);
+    
+   filterRDD.registerTempTable("filter");
+   
+   
+   SchemaRDD joined = csqlctx.sql("Select a.browser_type_desc,a.activity_details,f.amenity_filter_selection_desc, f.brand_filter_selection_desc FROM filter f JOIN activity a ON f.web_session_id = a.web_session_id");     
+
+   joined.cache();
+    Row[] rows = joined.collect();
+    System.out.println("Number of rows JOINED returned " + rows.length);
+ 
+    
+   
     int i = 0;
-    String activityDetails = "";
+   String activityDetails = "";
     if (rows.length > 0) {
-      LOGGER.info("ROW\tID\t\t\t\t\tTIMESTAMP\t\t\t\t\tACTIVITY TYPE DESC\tDESTINATION TEXT\t\t\tLOCATION");
-      for (Row row : rows) {
+     LOGGER.info("ROW\tID\t\tHIGHEST PRICE\t\tBRAND PREFERENCE\tDESTINATION TEXT\t\t\t");
+     for (Row row : rows) {
         i++;
         // Pull destination text from activity details blob
 
-        String activityTypeHexString = row.getString(4);
+        String activityTypeHexString = row.toString();
+        System.out.println(activityTypeHexString);
+       // System.out.println(activityTypeHexString);
         // Trim 0x from beginning of hex string
-        String activityTypeASCIIString = convertHexToString(activityTypeHexString.substring(2));
-        JSONObject jsonObject = new JSONObject(activityTypeASCIIString);
+        //String activityTypeASCIIString = convertHexToString(activityTypeHexString.substring(2));
+      // JSONObject jsonObject = new JSONObject(activityTypeASCIIString);
 
-        LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2) + "\t\t" + jsonObject.get("destination_text") + "\t\t" + row.getString(3));
-
-
-      }
+       // LOGGER.info( i + "\t\t" + row.getString(0) + "\t" + row.getString(1) + "\t" + row.getString(2) + "\t\t" + jsonObject.get("destinationText"));
+    //   LOGGER.info( i + "\t\t" + ((Row) row).getString(0) + "\t" + row.getInt(1));
+     }
     }
 
   }
